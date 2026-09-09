@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CostPlan Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ── TOKENS ── */
+:root{
+  --bg:#FFFFFF;
+  --bg2:#F6F5F2;
+  --border:#E6E4DF;
+  --text:#1A1A18;
+  --muted:#7C7970;
+  --link:#1B6AC9;
+  --green:#16A34A;
+  --red:#C8392B;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#18171A;
+    --bg2:#232128;
+    --border:#312F38;
+    --text:#EDEBF4;
+    --muted:#888295;
+    --link:#5B9CF6;
+    --green:#22C55E;
+    --red:#F87171;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#18171A;
+  --bg2:#232128;
+  --border:#312F38;
+  --text:#EDEBF4;
+  --muted:#888295;
+  --link:#5B9CF6;
+  --green:#22C55E;
+  --red:#F87171;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  font-size:14px;line-height:1.5;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+}
+
+/* ── TOP NAV ── */
+.topnav{
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;height:48px;
+}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--text)}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green)}
+
+/* ── LOGIN CENTER ── */
+.login-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:40px 20px;
+}
+.login-box{
+  width:100%;max-width:380px;
+  text-align:center;
+}
+.login-icon{
+  width:56px;height:56px;border-radius:14px;background:var(--bg2);
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto 20px;
+}
+.login-title{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-desc{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+
+/* ── LOGIN BUTTON ── */
+.btn-ms{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:11px 20px;
+  border:1.5px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);
+  font-size:14px;font-weight:600;cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.btn-ms:hover{border-color:var(--link);color:var(--link);background:var(--bg2)}
+.btn-ms:active{background:var(--bg2)}
+.btn-ms svg{width:20px;height:20px;flex-shrink:0}
+
+/* divider */
+.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* board list */
+.board-list{text-align:left;display:none}
+.board-list-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px}
+.board-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:7px;border:1px solid var(--border);
+  margin-bottom:8px;cursor:pointer;transition:border-color .15s;
+  background:var(--bg);
+}
+.board-item:hover{border-color:var(--link)}
+.board-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.board-name{font-size:13.5px;font-weight:600;flex:1}
+.board-role{font-size:11.5px;color:var(--muted)}
+
+/* user info bar */
+.user-bar{
+  display:none;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:8px;background:var(--bg2);
+  border:1px solid var(--border);margin-bottom:16px;
+}
+.av{width:28px;height:28px;border-radius:50%;background:#6366F1;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;flex:1}
+.btn-signout{font-size:12px;color:var(--muted);border:none;background:none;cursor:pointer;padding:3px 0}
+.btn-signout:hover{color:var(--red)}
+
+/* status / error */
+.status-msg{
+  font-size:13px;color:var(--muted);margin-top:16px;
+  min-height:20px;
+}
+.status-msg.error{color:var(--red)}
+.status-msg.ok{color:var(--green)}
+
+/* loading spinner */
+.spinner{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid var(--border);border-top-color:var(--link);
+  border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── FOOTER ── */
+.footer{
+  text-align:center;padding:20px;
+  font-size:11.5px;color:var(--muted);
+  border-top:1px solid var(--border);
+}
+
+/* responsive */
+@media(max-width:480px){
+  .login-box{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    CostPlan Board
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-icon">📋</div>
+    <div class="login-title">CostPlan Board</div>
+    <div class="login-desc">ระบบติดตามงานสำหรับทีม Cost Plan<br>เข้าสู่ระบบด้วยบัญชี Microsoft ขององค์กร</div>
+
+    <!-- User bar (shown after login) -->
+    <div class="user-bar" id="user-bar">
+      <div class="av" id="user-av">?</div>
+      <span class="user-name" id="user-name">—</span>
+      <button class="btn-signout" onclick="signOut()">ออกจากระบบ</button>
+    </div>
+
+    <!-- Login button (hidden after login) -->
+    <button class="btn-ms" id="btn-login" onclick="signIn()">
+      <!-- Microsoft logo -->
+      <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+        <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+        <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+      </svg>
+      เข้าสู่ระบบด้วย Microsoft
+    </button>
+
+    <div class="status-msg" id="status-msg"></div>
+
+    <!-- Board list (shown after login) -->
+    <div class="board-list" id="board-list">
+      <div class="login-divider">เลือก Board</div>
+      <div class="board-list-title">บอร์ดที่คุณเข้าถึงได้</div>
+      <div id="board-items"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  CostPlan Co., Ltd. · Powered by Microsoft 365
+</footer>
+
+<script>
+// ════════════════════════════════════════
+//  CONFIG — แก้ค่าให้ตรงกับ Azure App Registration
+// ════════════════════════════════════════
+const CONFIG = {
+  clientId: '166ec97e-274a-452b-be83-78bea1beeeca',
+  tenantId: '33021451-82a3-41cd-b43e-baf144e67483',
+  redirectUri: window.location.origin + window.location.pathname.replace(/index\.html$/, ''),
+
+  // บอร์ดทั้งหมดในระบบ (key = board id, value = config)
+  boards: {
+    'fee-proposal': {
+      name: 'Fee Proposal',
+      color: '#16A34A',
+      ownerEmail: 'marketing@costplan.co.th',
+      editGroup: 'CostPlan-FeeProposal',
+      roles: ['owner', 'editor', 'viewer'],   // ตรวจสอบ group ตาม role
+    },
+    'accounting': {
+      name: 'Accounting',
+      color: '#1B6AC9',
+      ownerUserId: '2b6b5095-b61a-4caa-9f7c-e677ff920cba',
+      editGroup: 'CostPlan-Accounting',
+    },
+  },
+  managementGroup: 'CostPlan-Management',
+};
+
+// ════════════════════════════════════════
+//  MSAL — โหลด inline (ไม่พึ่ง CDN)
+//  วาง MSAL source ที่ได้ download ไว้ที่นี่
+//  หรือ โหลดจาก CDN (ต้องมี internet)
+// ════════════════════════════════════════
+// CDN fallback list — ลองตามลำดับ
+const MSAL_CDNS = [
+  'https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js',
+  'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.39.0/lib/msal-browser.min.js',
+  'https://unpkg.com/@azure/msal-browser@2.39.0/lib/msal-browser.min.js',
+];
+
+let msalInstance = null;
+let currentAccount = null;
+
+// ── โหลด MSAL (ลอง CDN ทีละเส้น) ──
+function loadMsal(){
+  if(window.msal) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    let idx = 0;
+    function tryNext(){
+      if(idx >= MSAL_CDNS.length){
+        reject(new Error('โหลด MSAL ไม่สำเร็จจากทุก CDN — ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'));
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = MSAL_CDNS[idx++];
+      s.onload = () => { if(window.msal) resolve(); else tryNext(); };
+      s.onerror = tryNext;
+      document.head.appendChild(s);
+    }
+    tryNext();
+  });
+}
+
+// ── สร้าง MSAL instance ──
+async function initMsal(){
+  await loadMsal();
+  if(msalInstance) return msalInstance;
+
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: CONFIG.clientId,
+      authority: 'https://login.microsoftonline.com/' + CONFIG.tenantId,
+      redirectUri: CONFIG.redirectUri,
+    },
+    cache: {
+      cacheLocation: 'sessionStorage',
+      storeAuthStateInCookie: false,
+    },
+  });
+  await msalInstance.initialize();
+  return msalInstance;
+}
+
+// ── Init — รับ redirect และตรวจ session เดิม ──
+async function init(){
+  // ถ้าเปิดจาก file:// หรือ local — ไม่โหลด MSAL อัตโนมัติ
+  // รอให้ผู้ใช้กดปุ่มเอง เพื่อกันตัวก่อน MSAL จะพร้อม
+  const isRedirectBack = window.location.hash.includes('code=') ||
+                         window.location.search.includes('code=');
+
+  if(isRedirectBack){
+    // กำลังรับ token กลับจาก Microsoft
+    setStatus('<span class="spinner"></span>กำลังยืนยันตัวตน…');
+    try {
+      const msal_ = await initMsal();
+      const resp = await msal_.handleRedirectPromise();
+      if(resp && resp.account){
+        currentAccount = resp.account;
+        showLoggedIn(currentAccount);
+      } else {
+        setStatus('');
+      }
+    } catch(e){
+      setStatus('⚠️ ' + e.message, true);
+    }
+  } else {
+    // ตรวจ session ที่เก็บไว้ (ไม่ blocking — ถ้า MSAL ยังไม่โหลดก็ข้ามไป)
+    try {
+      const msal_ = await initMsal();
+      await msal_.handleRedirectPromise();
+      const accounts = msal_.getAllAccounts();
+      if(accounts.length > 0){
+        currentAccount = accounts[0];
+        showLoggedIn(currentAccount);
+      }
+    } catch(e){
+      // session ตรวจไม่ได้ — ปล่อยให้แสดงปุ่ม Login ปกติ
+    }
+    setStatus('');
+  }
+}
+
+// ── Sign In ──
+async function signIn(){
+  try {
+    setStatus('<span class="spinner"></span>กำลังโหลด MSAL…');
+    document.getElementById('btn-login').disabled = true;
+    const msal_ = await initMsal();
+    setStatus('<span class="spinner"></span>กำลังเชื่อมต่อ Microsoft…');
+    await msal_.loginRedirect({
+      scopes: ['openid', 'profile', 'email', 'User.Read'],
+      prompt: 'select_account',
+    });
+  } catch(e){
+    setStatus('⚠️ ' + e.message, true);
+    document.getElementById('btn-login').disabled = false;
+  }
+}
+
+// ── Sign Out ──
+async function signOut(){
+  try {
+    const msal_ = await initMsal();
+    await msal_.logoutRedirect({
+      account: currentAccount,
+      postLogoutRedirectUri: CONFIG.redirectUri,
+    });
+  } catch(e){
+    setStatus('⚠️ ' + e.message, true);
+  }
+}
+
+// ── แสดงหน้าหลังล็อกอิน ──
+function showLoggedIn(account){
+  const name = account.name || account.username;
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+  document.getElementById('user-av').textContent = initials;
+  document.getElementById('user-name').textContent = name + '  (' + account.username + ')';
+  document.getElementById('user-bar').style.display = 'flex';
+  document.getElementById('btn-login').style.display = 'none';
+
+  setStatus('✓ เข้าสู่ระบบสำเร็จ', false, true);
+  renderBoards(account);
+}
+
+// ── แสดง Board List ──
+function renderBoards(account){
+  const email = (account.username || '').toLowerCase();
+  const items = document.getElementById('board-items');
+  items.innerHTML = '';
+
+  // ตรวจสอบว่าผู้ใช้เข้าถึง board ไหนได้
+  // (Production: ควรตรวจ group membership ผ่าน Graph API)
+  // (Preview: แสดงทุก board)
+  const visibleBoards = Object.entries(CONFIG.boards);
+
+  if(visibleBoards.length === 0){
+    items.innerHTML = '<p style="color:var(--muted);font-size:13px">ไม่มี board ที่เข้าถึงได้</p>';
+  } else {
+    visibleBoards.forEach(([id, board]) => {
+      const isOwner = board.ownerEmail && email === board.ownerEmail.toLowerCase();
+      const role = isOwner ? 'เจ้าของ' : 'ผู้แก้ไข';
+
+      const el = document.createElement('div');
+      el.className = 'board-item';
+      el.innerHTML = `
+        <div class="board-dot" style="background:${board.color}"></div>
+        <span class="board-name">${board.name}</span>
+        <span class="board-role">${role}</span>
+      `;
+      el.onclick = () => goToBoard(id, board);
+      items.appendChild(el);
+    });
+  }
+
+  document.getElementById('board-list').style.display = 'block';
+}
+
+// ── ไปที่ Board ──
+function goToBoard(id, board){
+  // Production: redirect ไปหน้า board จริง
+  // เช่น window.location.href = 'board.html?id=' + id;
+  alert('เปิด Board: ' + board.name + '\n(Production: redirect ไปหน้า board จริง)');
+}
+
+// ── Helper ──
+function setStatus(msg, isError = false, isOk = false){
+  const el = document.getElementById('status-msg');
+  el.innerHTML = msg;
+  el.className = 'status-msg' + (isError ? ' error' : '') + (isOk ? ' ok' : '');
+}
+
+// ── Start ──
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
